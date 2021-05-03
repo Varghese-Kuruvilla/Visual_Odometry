@@ -13,7 +13,8 @@ import os
 np.set_printoptions(suppress=True, precision = 2)
 
 # from SURF import *
-from SIFT import *
+# from SIFT import *
+from R2D2 import *
 
 from frame_utils import *
 from park_utils import *
