@@ -221,11 +221,11 @@ if __name__ == '__main__':
         traj_no = '%02d'%(traj+0)
         ofvo = OpticalFlowVO()
 
-        img_dir = "data/optical_flow/all_sequences/%02d"%traj
+        img_dir = "/home/olorin/Desktop/IISc/OdometryProject/ParkingSpot/data/feb24/data/opticalflow/all_sequences/%02d"%traj
         imgfiles = sorted(glob.glob(img_dir + '/*'))[0::2]
         for imgfile in imgfiles:
             image = cv2.imread(imgfile, 0)
             image = cv2.resize(image, (640, 480), interpolation = cv2.INTER_LANCZOS4)
             ofvo.process_frame(image)
-            cv2.waitKey(1)
+            cv2.waitKey(0)
         print(ofvo.framepair.frame2.pose[:3, 3], ofvo.total_distance)
