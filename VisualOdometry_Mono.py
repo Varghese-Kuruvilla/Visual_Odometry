@@ -233,7 +233,7 @@ class VisualOdometry:
                         # flag, r, t = cv2.solvePnP(objectPoints = new_points_3D, imagePoints = new_right_kp, cameraMatrix = self.cam_intr, distCoeffs = None, rvec = cv2.Rodrigues(R1_tmp)[0], tvec = t1_tmp, useExtrinsicGuess = True, flags = cv2.SOLVEPNP_ITERATIVE)
                         # inlier = np.random.rand(60,2)
                         # print(inlier.shape[0])
-                        flag, r, t, inlier = cv2.solvePnPRansac(objectPoints = new_points_3D, imagePoints = new_right_kp, cameraMatrix = self.cam_intr, distCoeffs = None, iterationsCount = 1000, reprojectionError=1.250)
+                        flag, r, t, inlier = cv2.solvePnPRansac(objectPoints = new_points_3D, imagePoints = new_right_kp, cameraMatrix = self.cam_intr, distCoeffs = None, iterationsCount = 100, reprojectionError=1.50)
                         # flag, r, t, inlier = cv2.solvePnPRansac(objectPoints = new_points_3D, imagePoints = new_right_kp, cameraMatrix = self.cam_intr, distCoeffs = np.array([0.0427517,     0.20910611,    0.00161125,    0.00081772, -0.79102898]), iterationsCount = 1000, reprojectionError=1.75)
                         # print(inlier.shape)
 
