@@ -1,0 +1,22 @@
+
+>> Creating net = Quad_L2Net_ConfCFS()
+ ( Model size: 486K parameters )
+Launching on GPUs 0
+r2d2/nets/patchnet.py:20: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  if ux.shape[1] == 1:
+r2d2/nets/patchnet.py:23: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  elif ux.shape[1] == 2:
+Traceback (most recent call last):
+  File "R2D2_conv_onnx.py", line 249, in <module>
+    conv_onnx()
+  File "R2D2_conv_onnx.py", line 242, in conv_onnx
+    output_names = ['output'])
+  File "/usr/local/lib/python3.6/dist-packages/torch/onnx/__init__.py", line 230, in export
+    custom_opsets, enable_onnx_checker, use_external_data_format)
+  File "/usr/local/lib/python3.6/dist-packages/torch/onnx/utils.py", line 91, in export
+    use_external_data_format=use_external_data_format)
+  File "/usr/local/lib/python3.6/dist-packages/torch/onnx/utils.py", line 639, in _export
+    dynamic_axes=dynamic_axes)
+  File "/usr/local/lib/python3.6/dist-packages/torch/onnx/utils.py", line 446, in _model_to_graph
+    params_dict = torch._C._jit_pass_onnx_eval_peephole(graph, params_dict)
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!

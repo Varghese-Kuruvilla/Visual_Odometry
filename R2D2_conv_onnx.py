@@ -4,9 +4,9 @@ import os, pdb
 from PIL import Image
 import numpy as np
 #For TensorRT conversion
-import onnx
+# import onnx
 import torch
-from torch2trt import torch2trt
+# from torch2trt import torch2trt
 import glob
 from tools import common
 from tools.dataloader import norm_RGB
@@ -21,6 +21,8 @@ import cv2
 import torch
 import glob
 import pickle
+import logging
+logging.basicConfig(filename='torch2onnx.log', level=logging.DEBUG)
 # import matplotlib.pyplot as plt
 
 
@@ -228,13 +230,29 @@ def get_matches(ref_kp, ref_desc, cur_kp, cur_desc, imgshape):
 
     return matches
 
+def conv_onnx():
+    batch_size = 1
+    net.eval()
+    x = torch.randn(batch_size,3,480,640,requires_grad=True)
+    #Exporting the model
+    torch.onnx.export(net,[x],"r2d2_dynamic.onnx",
+        export_params=True,
+        do_constant_folding=True,
+        input_names = ['input'],
+        output_names = ['output'],
+        dynamic_axes={'input' : {0 : 'batch_size'},    # variable length axes
+                    'output' : {0 : 'batch_size'}})
+    print("Converted pytorch model to ONNX")
+
 
 if __name__ == '__main__':
 
-    for img in glob.glob("/home/volta-2/VO/VO_data/mar8seq/00/*.png"):
-        frame = cv2.imread(img)
-        # print(frame)
-        frame = cv2.resize(frame, (640,480), interpolation = cv2.INTER_LANCZOS4)
-        start_time = time.time()
-        kps, desc = extract_features_and_desc(frame)
-        print("Time taken for R2D2:",time.time() - start_time())
+    #Convert torch model to ONNX 
+    conv_onnx()
+    # for img in glob.glob("/home/volta-2/VO/VO_data/mar8seq/00/*.png"):
+    #     frame = cv2.imread(img)
+    #     # print(frame)
+    #     frame = cv2.resize(frame, (640,480), interpolation = cv2.INTER_LANCZOS4)
+    #     start_time = time.time()
+    #     kps, desc = extract_features_and_desc(frame)
+    #     print("Time taken for R2D2:",time.time() - start_time())
