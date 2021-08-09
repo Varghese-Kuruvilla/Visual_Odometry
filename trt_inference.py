@@ -93,7 +93,7 @@ def main():
     #     f.write(engine.serialize()
     
     
-    with open("r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+    with open("/workspace/VO/engines/r2d2_fp32.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
 	    engine = runtime.deserialize_cuda_engine(f.read())
     context = engine.create_execution_context()
 
@@ -101,7 +101,7 @@ def main():
     with engine.create_execution_context() as context:
             # For more information on performing inference, refer to the introductory samples.
             # The common.do_inference function will return a list of outputs - we only have one in this case.
-            for file_path in glob.glob("/home/volta-2/VO/data/mar8seq/00/*.png"):
+            for file_path in glob.glob("/workspace/VO/data/mar8seq/00/left_ *.png"):
                 frame = cv2.imread(file_path)
                 frame = prep_img(frame)
                 inputs[0].host = frame
@@ -109,6 +109,7 @@ def main():
                 output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
                 print("Inference:",time.time()-start_time)
                 print(output)
+                breakpoint()
 
 
 if __name__ == '__main__':
