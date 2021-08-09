@@ -229,7 +229,7 @@ class VisualOdometry:
                 if(frame_no == 0): #First frame
                         # print("ZERO INDEX")
                         if self.method != 'OF':
-                                kp, desc = extract_features_and_desc(img)                
+                                kp, desc = extract_features_and_desc(img,trt=True)                
                                 frame1 = Frame(id = 0, img = img, kps = kp, desc = desc, fil = '%06d'%frame_no, pose = SE3(), depth = depth_img)
 
                         self.ref_data = append_to_list(self.ref_data, frame1)
@@ -244,7 +244,7 @@ class VisualOdometry:
                         self.img_id = imgidx
                         to_update = False
 
-                        cur_kp, cur_desc = extract_features_and_desc(cur_img)
+                        cur_kp, cur_desc = extract_features_and_desc(cur_img,trt=True)
                         frame1 = self.ref_data[-1]
                         ref_kp, ref_desc = self.ref_data[-1].get_kp_desc()
                         frame2 = Frame(id = imgidx, img = cur_img, kps = cur_kp, desc = cur_desc, fil = '%06d'%frame_no, pose = SE3(), depth = depth_img)

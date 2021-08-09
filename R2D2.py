@@ -21,7 +21,7 @@ import pickle
 import matplotlib.pyplot as plt
 import logging
 logger = logging.getLogger('module_R2D2')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 #For debug
 def breakpoint():
@@ -122,14 +122,19 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             # extract descriptors
             with torch.no_grad():
                 res = net(imgs=[img])
-            
-            # logger.info("type(res):" + str(type(res)))
-            # breakpoint()
-                
+
+
+            print("res:" + str(res))
+            print("**res:",**res) 
+            breakpoint()   
             # get output and reliability map
             descriptors = res['descriptors'][0]
             reliability = res['reliability'][0]
             repeatability = res['repeatability'][0]
+            logger.info("descriptors.shape" + str(descriptors.shape))
+            logger.info("reliability.shape" + str(reliability.shape))
+            logger.info("repeatability.shape" + str(repeatability.shape))
+            
 
             # normalize the reliability for nms
             # extract maxima and descs
@@ -191,7 +196,7 @@ if iscuda: net = net.cuda()
 detector = NonMaxSuppression( rel_thr = args['reliability_thr'], rep_thr = args['repeatability_thr'])
 
 
-def extract_features_and_desc(image):
+def extract_features_and_desc(image,trt=True):
     '''
     image: np.uint8
     '''
@@ -209,6 +214,6 @@ def extract_features_and_desc(image):
 
 def get_matches(ref_kp, ref_desc, cur_kp, cur_desc, imgshape):
     matches = ratio_mutual_nn_matcher(ref_desc, cur_desc)[0]
-
+    logging.info("matches:" + str(matches))
     return matches
 

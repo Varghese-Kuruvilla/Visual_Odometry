@@ -21,14 +21,67 @@ def breakpoint():
 
 ONNX_FILE_PATH = "/home/volta-2/VO/Visual_Odometry_code/r2d2.onnx"
 # logger to capture errors, warnings, and other information during the build and inference phases
-TRT_LOGGER = trt.Logger()
 
-with open("r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
-	engine = runtime.deserialize_cuda_engine(f.read())
-context = engine.create_execution_context()
-cfx = cuda.Device(0).make_context()
+class ModelData(object):
+    # MODEL_PATH = "ResNet50.onnx"
+    # INPUT_SHAPE = (3, 224, 224)
+    # We can convert TensorRT data types to numpy types with trt.nptype()
+    DTYPE = trt.float32
 
-inputs, outputs, bindings, stream = common.allocate_buffers(engine)
+class trt_infer:
+    def __init__(self):
+
+        TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+        self.cfx = cuda.Device(0).make_context()
+        #Read engine file
+        with open("/home/volta-2/VO/engines/r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+	        engine = runtime.deserialize_cuda_engine(f.read())
+        context = engine.create_execution_context()
+        #Prepare buffer
+        inputs, outputs, bindings, stream = common.allocate_buffers(engine)
+        #store
+        self.inputs = inputs
+        self.outputs = outputs
+        self.bindings = bindings
+        self.stream = stream
+        self.context = context
+        self.engine = engine
+        if self.cfx:
+            # print("Inside self.cfx")
+            self.cfx.pop()
+    
+    def infer(self,frame):
+        if self.cfx:
+            # print("Inside self.cfx infer")
+            self.cfx.push()
+        #restore 
+        stream = self.stream
+        context = self.context
+        engine = self.engine
+
+        inputs = self.inputs
+        outputs = self.outputs
+        bindings = self.bindings
+        stream = self.stream
+    
+
+        frame = frame.numpy()
+        frame = frame.astype(trt.nptype(ModelData.DTYPE)).ravel()
+        # inputs[0].host = frame
+        np.copyto(inputs[0].host, frame)
+        # This particular ResNet50 model requires some preprocessing, specifically, mean normalization.
+        res = common.do_inference_v2(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+        # res = {k:[r[k] for r in res if k in r] for k in {k for r in res for k in r}}
+        
+        if self.cfx:
+            # print("Finished self.cfx infer")
+            self.cfx.pop()
+        # print("Finished infer")
+
+        return res
+
+
+
 
 def build_engine(onnx_file_path):
     # initialize TensorRT engine and parse ONNX model
@@ -81,8 +134,12 @@ def infer(frame):
         # For more information on performing inference, refer to the introductory samples.
         # The common.do_inference function will return a list of outputs - we only have one in this case.
     inputs[0].host = frame
+    print("After inputs[0].host = frame")
     start_time = time.time()
+    # cfx.push()
     output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+    # print(output)
+    # cfx.pop()
     return output
 
 def main():
@@ -93,23 +150,24 @@ def main():
     #     f.write(engine.serialize()
     
     
-    with open("/workspace/VO/engines/r2d2_fp32.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+    with open("/home/volta-2/VO/engines/r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
 	    engine = runtime.deserialize_cuda_engine(f.read())
     context = engine.create_execution_context()
 
     inputs, outputs, bindings, stream = common.allocate_buffers(engine)
-    with engine.create_execution_context() as context:
+    # with engine.create_execution_context() as context:
             # For more information on performing inference, refer to the introductory samples.
             # The common.do_inference function will return a list of outputs - we only have one in this case.
-            for file_path in glob.glob("/workspace/VO/data/mar8seq/00/left_ *.png"):
-                frame = cv2.imread(file_path)
-                frame = prep_img(frame)
-                inputs[0].host = frame
-                start_time = time.time()
-                output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
-                print("Inference:",time.time()-start_time)
-                print(output)
-                breakpoint()
+    for file_path in glob.glob("/home/volta-2/VO/data/mar8seq/00/*.png"):
+        try:
+            frame = cv2.imread(file_path)
+            frame = prep_img(frame)
+            inputs[0].host = frame
+            start_time = time.time()
+            output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+            print(output)
+        except KeyboardInterrupt:
+            cfx.pop()
 
 
 if __name__ == '__main__':
