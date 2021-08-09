@@ -34,7 +34,7 @@ class trt_infer:
         TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
         self.cfx = cuda.Device(0).make_context()
         #Read engine file
-        with open("/home/volta-2/VO/engines/r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+        with open("/workspace/VO/engines/r2d2_fp32.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
 	        engine = runtime.deserialize_cuda_engine(f.read())
         context = engine.create_execution_context()
         #Prepare buffer
@@ -65,7 +65,7 @@ class trt_infer:
         stream = self.stream
     
 
-        frame = frame.numpy()
+        # frame = frame.numpy()
         frame = frame.astype(trt.nptype(ModelData.DTYPE)).ravel()
         # inputs[0].host = frame
         np.copyto(inputs[0].host, frame)
@@ -127,20 +127,6 @@ def prep_img(frame):
     img = img.numpy()
     return img
 
-def infer(frame):
-    frame = frame.numpy()
-    print("frame.shape()",np.shape(frame))
-    # with engine.create_execution_context() as context:
-        # For more information on performing inference, refer to the introductory samples.
-        # The common.do_inference function will return a list of outputs - we only have one in this case.
-    inputs[0].host = frame
-    print("After inputs[0].host = frame")
-    start_time = time.time()
-    # cfx.push()
-    output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
-    # print(output)
-    # cfx.pop()
-    return output
 
 def main():
     # initialize TensorRT engine and parse ONNX model
@@ -149,25 +135,39 @@ def main():
     # with open("r2d2.engine","wb") as f:
     #     f.write(engine.serialize()
     
-    
-    with open("/home/volta-2/VO/engines/r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
-	    engine = runtime.deserialize_cuda_engine(f.read())
-    context = engine.create_execution_context()
+    trt_infer_obj = trt_infer()
+    for file_path in sorted(glob.glob("/workspace/VO/data/mar8seq/00/left*")):
+        print("Inside image read")
+        frame = cv2.imread(file_path)
+        frame = prep_img(frame) #1x3x480x640
+        start_time = time.time()
+        output = trt_infer_obj.infer(frame)
+        descriptors = torch.from_numpy(np.reshape(output[0],(1,128,frame.shape[2],frame.shape[3]))).cuda()
+        reliability = torch.from_numpy(np.reshape(output[1],(1,1,frame.shape[2],frame.shape[3]))).cuda()
+        repeatability = torch.from_numpy(np.reshape(output[2],(1,1,frame.shape[2],frame.shape[3]))).cuda()
+        res = {'descriptors':descriptors, 'reliability':reliability, 'repeatability':repeatability}
+        print("Inference time:",time.time() - start_time)
+        # print("res:",res)
+        # breakpoint()
 
-    inputs, outputs, bindings, stream = common.allocate_buffers(engine)
+    # with open("/home/volta-2/VO/engines/r2d2.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+	#     engine = runtime.deserialize_cuda_engine(f.read())
+    # context = engine.create_execution_context()
+
+    # inputs, outputs, bindings, stream = common.allocate_buffers(engine)
     # with engine.create_execution_context() as context:
             # For more information on performing inference, refer to the introductory samples.
             # The common.do_inference function will return a list of outputs - we only have one in this case.
-    for file_path in glob.glob("/home/volta-2/VO/data/mar8seq/00/*.png"):
-        try:
-            frame = cv2.imread(file_path)
-            frame = prep_img(frame)
-            inputs[0].host = frame
-            start_time = time.time()
-            output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
-            print(output)
-        except KeyboardInterrupt:
-            cfx.pop()
+    # for file_path in glob.glob("/home/volta-2/VO/data/mar8seq/00/*.png"):
+    #     try:
+    #         frame = cv2.imread(file_path)
+    #         frame = prep_img(frame)
+    #         inputs[0].host = frame
+    #         start_time = time.time()
+    #         output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+    #         print(output)
+    #     except KeyboardInterrupt:
+    #         cfx.pop()
 
 
 if __name__ == '__main__':
