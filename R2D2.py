@@ -20,6 +20,8 @@ import glob
 import pickle
 import matplotlib.pyplot as plt
 import logging
+import trt_inference
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('module_R2D2')
 logger.setLevel(logging.INFO)
 
@@ -103,9 +105,11 @@ class NonMaxSuppression (torch.nn.Module):
 def extract_multiscale( net, img, detector, scale_f=2**0.25, 
                         min_scale=0.0, max_scale=1, 
                         min_size=256, max_size=1280, 
+                        trt = True,
                         verbose=False):
-    old_bm = torch.backends.cudnn.benchmark 
-    torch.backends.cudnn.benchmark = False # speedup
+    if(trt == False):
+        old_bm = torch.backends.cudnn.benchmark 
+        torch.backends.cudnn.benchmark = False # speedup
     
     # extract keypoints at multiple scales
     B, three, H, W = img.shape
@@ -120,13 +124,14 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             nh, nw = img.shape[2:]
             if verbose: print(f"extracting at scale x{s:.02f} = {nw:4d}x{nh:3d}")
             # extract descriptors
-            with torch.no_grad():
-                res = net(imgs=[img])
-
-
-            print("res:" + str(res))
-            print("**res:",**res) 
-            breakpoint()   
+            if(trt == False):
+                with torch.no_grad():
+                    res = net(imgs=[img])
+            
+            else:
+                # print("Inside trt_inference")
+                res = trt_inference.r2d2_trt_inference(img)
+            # print("res:" + str(res)) 
             # get output and reliability map
             descriptors = res['descriptors'][0]
             reliability = res['reliability'][0]
@@ -159,7 +164,8 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
         img = F.interpolate(img, (nh,nw), mode='bilinear', align_corners=False)
 
     # restore value
-    torch.backends.cudnn.benchmark = old_bm
+    if(trt == False):
+        torch.backends.cudnn.benchmark = old_bm
 
     Y = torch.cat(Y)
     X = torch.cat(X)
@@ -170,7 +176,7 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
     return XYS, D, scores
 
 
-def extract_keypoints(img, args):
+def extract_keypoints(img, args,trt=True):
     t1 = time.time()
 
         
@@ -179,7 +185,8 @@ def extract_keypoints(img, args):
         min_scale = args['min_scale'], 
         max_scale = args['max_scale'],
         min_size  = args['min_size'], 
-        max_size  = args['max_size'], 
+        max_size  = args['max_size'],
+        trt = trt, 
         verbose = False)
 
     xys = xys.cpu().numpy()
@@ -205,15 +212,16 @@ def extract_features_and_desc(image,trt=True):
     img_cpu = img_pil
     # print("type(img_cpu):",type(img_cpu))
     img = norm_RGB(img_cpu)[None]
-    if iscuda: 
-      img = img.cuda()
-    kps, desc = extract_keypoints(img, args)
+    if(trt == False): #For Trt inference, the image is passed to the GPU in trt_inference.py
+        if iscuda: 
+            img = img.cuda()
+    kps, desc = extract_keypoints(img, args,trt=trt)
     # alldesc = np.transpose(alldesc, (1, 2,0))
 
     return np.squeeze(kps), np.squeeze(desc)
 
 def get_matches(ref_kp, ref_desc, cur_kp, cur_desc, imgshape):
     matches = ratio_mutual_nn_matcher(ref_desc, cur_desc)[0]
-    logging.info("matches:" + str(matches))
+    # logging.info("matches:" + str(matches))
     return matches
 

@@ -31,7 +31,7 @@ class ModelData(object):
 class trt_infer:
     def __init__(self):
 
-        TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+        TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
         self.cfx = cuda.Device(0).make_context()
         #Read engine file
         with open("/workspace/VO/engines/r2d2_fp32.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
@@ -65,7 +65,7 @@ class trt_infer:
         stream = self.stream
     
 
-        # frame = frame.numpy()
+        frame = frame.numpy()
         frame = frame.astype(trt.nptype(ModelData.DTYPE)).ravel()
         # inputs[0].host = frame
         np.copyto(inputs[0].host, frame)
@@ -126,6 +126,18 @@ def prep_img(frame):
     img = norm_RGB(img_cpu)[None]
     img = img.numpy()
     return img
+
+def r2d2_trt_inference(frame):
+    trt_infer_obj = trt_infer()
+    start_time = time.time()
+    output = trt_infer_obj.infer(frame)
+    # print("Inference time:",time.time() - start_time)
+    descriptors = torch.from_numpy(np.reshape(output[0],(1,1,128,frame.shape[2],frame.shape[3]))).cuda()
+    reliability = torch.from_numpy(np.reshape(output[1],(1,1,1,frame.shape[2],frame.shape[3]))).cuda()
+    repeatability = torch.from_numpy(np.reshape(output[2],(1,1,1,frame.shape[2],frame.shape[3]))).cuda()
+    res = {'descriptors':descriptors, 'reliability':reliability, 'repeatability':repeatability}
+    # print("res:",res)
+    return res
 
 
 def main():
