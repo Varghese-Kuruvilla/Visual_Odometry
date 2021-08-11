@@ -18,6 +18,9 @@ midpoints = [(168, 352), (175, 328), (183, 313), (204, 306), (187, 296), (203, 2
 # numpyseeds = [8214, 4123, 9451, 36215, 58926]
 numpyseeds = [8214]
 
+#For debug
+def breakpoint():
+  inp = input("Waiting for input")
 
 # for seq_no in range(1, 9):
 seq_no = 0
@@ -40,14 +43,16 @@ for index, (left_image_file, dep_image_file) in tqdm(enumerate(zip(left_image_fi
     left_frame = cv2.cvtColor(left_frame, cv2.COLOR_BGR2RGB)
     dep_img = np.load(dep_image_file) * 0.97 #TODO: Does ZED always overestimate the depth?
 
-    start_time = time.time()
+    if(index == 0):
+      start_time = time.time()
     left_frame = cv2.resize(left_frame, (640,480), interpolation = cv2.INTER_LANCZOS4)
     dep_img = cv2.resize(dep_img, (640,480), interpolation = cv2.INTER_NEAREST)
     frame_pose = vo.process_frame(left_frame, dep_img, midpoints[seq_no], index)
-    end_time = time.time()
-    
-    print("Time taken:"+str(end_time - start_time))
-    print("frame_pose.t.T" + str(frame_pose.t.T))
+    # print("Time taken:"+str(end_time - start_time))
+    # print("frame_pose.t.T" + str(frame_pose.t.T))
     # cv2.waitKey(1)
     # print(time.time() - t_x)
+
+print("Total time:",time.time() - start_time)
+print("Total time taken:", (time.time() - start_time)/index)
 print(frame_pose.t.T)

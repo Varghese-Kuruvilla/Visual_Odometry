@@ -136,9 +136,9 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             descriptors = res['descriptors'][0]
             reliability = res['reliability'][0]
             repeatability = res['repeatability'][0]
-            logger.info("descriptors.shape" + str(descriptors.shape))
-            logger.info("reliability.shape" + str(reliability.shape))
-            logger.info("repeatability.shape" + str(repeatability.shape))
+            # logger.info("descriptors.shape" + str(descriptors.shape))
+            # logger.info("reliability.shape" + str(reliability.shape))
+            # logger.info("repeatability.shape" + str(repeatability.shape))
             
 
             # normalize the reliability for nms
@@ -177,9 +177,10 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
 
 
 def extract_keypoints(img, args,trt=True):
-    t1 = time.time()
 
-        
+    if(trt == True):
+        net = None
+    
     xys, desc, scores = extract_multiscale(net, img, detector,
         scale_f   = args['scale_f'], 
         min_scale = args['min_scale'], 
@@ -197,9 +198,9 @@ def extract_keypoints(img, args,trt=True):
     
 
 args = {'model' : 'r2d2/models/r2d2_WAF_N16.pt', 'scale_f' : 2**0.25, 'min_size' : 256, 'max_size' : 1380, 'min_scale' : 0, 'max_scale' : 1, 'reliability_thr' : 0.7, 'repeatability_thr' : 0.7 , 'gpu' : [0]}
-net = load_network(args['model'])
-iscuda = common.torch_set_gpu(args['gpu'])
-if iscuda: net = net.cuda()
+# net = load_network(args['model'])
+# iscuda = common.torch_set_gpu(args['gpu'])
+# if iscuda: net = net.cuda()
 detector = NonMaxSuppression( rel_thr = args['reliability_thr'], rep_thr = args['repeatability_thr'])
 
 
@@ -207,6 +208,13 @@ def extract_features_and_desc(image,trt=True):
     '''
     image: np.uint8
     '''
+
+    if(trt == False):
+        #Perform inference using pytorch
+        net = load_network(args['model'])
+        iscuda = common.torch_set_gpu(args['gpu'])
+        if iscuda: net = net.cuda()
+
     img_pil = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     img_pil = Image.fromarray(img_pil)
     img_cpu = img_pil

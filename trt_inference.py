@@ -117,6 +117,8 @@ def build_engine(onnx_file_path):
     print("Completed creating Engine")
     return engine, context
 
+#Global variables
+trt_infer_obj = trt_infer()
 
 def prep_img(frame):
     image = cv2.resize(frame, (640,480), interpolation = cv2.INTER_LANCZOS4)
@@ -128,14 +130,14 @@ def prep_img(frame):
     return img
 
 def r2d2_trt_inference(frame):
-    trt_infer_obj = trt_infer()
     start_time = time.time()
     output = trt_infer_obj.infer(frame)
-    # print("Inference time:",time.time() - start_time)
     descriptors = torch.from_numpy(np.reshape(output[0],(1,1,128,frame.shape[2],frame.shape[3]))).cuda()
     reliability = torch.from_numpy(np.reshape(output[1],(1,1,1,frame.shape[2],frame.shape[3]))).cuda()
     repeatability = torch.from_numpy(np.reshape(output[2],(1,1,1,frame.shape[2],frame.shape[3]))).cuda()
     res = {'descriptors':descriptors, 'reliability':reliability, 'repeatability':repeatability}
+    # print("Inference time:",time.time() - start_time)
+
     # print("res:",res)
     return res
 
