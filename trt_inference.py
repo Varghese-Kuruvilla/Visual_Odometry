@@ -130,7 +130,7 @@ def prep_img(frame):
     return img
 
 def r2d2_trt_inference(frame):
-    start_time = time.time()
+    # start_time = time.time()
     output = trt_infer_obj.infer(frame)
     descriptors = torch.from_numpy(np.reshape(output[0],(1,1,128,frame.shape[2],frame.shape[3]))).cuda()
     reliability = torch.from_numpy(np.reshape(output[1],(1,1,1,frame.shape[2],frame.shape[3]))).cuda()

@@ -1,0 +1,7 @@
+FPS of pytorch pipeline: 6.25FPS
+FPS of TRT pipeline: 5FPS
+FPS of pytorch inference alone: 1000 FPS
+FPS of TRT inference alone: 16 FPS 
+-------------------------------------------------------------------------------------------------
+NOTE: NMS seems to be taking a huge chunk of time.
+FPS of NMS stage alone: 15.625

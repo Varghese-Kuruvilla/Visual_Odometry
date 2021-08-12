@@ -92,8 +92,11 @@ class NonMaxSuppression (torch.nn.Module):
         assert len(reliability) == len(repeatability) == 1
         reliability, repeatability = reliability[0], repeatability[0]
 
+
         # local maxima
         maxima = (repeatability == self.max_filter(repeatability))
+        # print("maxima:",maxima)
+        # breakpoint()
 
         # remove low peaks
         maxima *= (repeatability >= self.rep_thr)
@@ -107,6 +110,8 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
                         min_size=256, max_size=1280, 
                         trt = True,
                         verbose=False):
+
+    start_time = None
     if(trt == False):
         old_bm = torch.backends.cudnn.benchmark 
         torch.backends.cudnn.benchmark = False # speedup
@@ -117,7 +122,6 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
     
     assert max_scale <= 1
     s = 1.0 # current scale factor
-    
     X,Y,S,C,Q,D = [],[],[],[],[],[]
     while  s+0.001 >= max(min_scale, min_size / max(H,W)):
         if s-0.001 <= min(max_scale, max_size / max(H,W)):
@@ -126,7 +130,9 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             # extract descriptors
             if(trt == False):
                 with torch.no_grad():
+                    start_time = time.time()
                     res = net(imgs=[img])
+
             
             else:
                 # print("Inside trt_inference")
@@ -136,6 +142,7 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             descriptors = res['descriptors'][0]
             reliability = res['reliability'][0]
             repeatability = res['repeatability'][0]
+            # logger.info("descriptors:" + str(descriptors))
             # logger.info("descriptors.shape" + str(descriptors.shape))
             # logger.info("reliability.shape" + str(reliability.shape))
             # logger.info("repeatability.shape" + str(repeatability.shape))
@@ -143,7 +150,16 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
 
             # normalize the reliability for nms
             # extract maxima and descs
+            start_nms_time = time.time()
+            # print("repeatability:",repeatability)
             y,x = detector(**res) # nms
+            print("Time taken for NMS stage:",time.time()-start_nms_time)
+            # print("type(y):",type(y))
+            # print("type(x):",type(x))
+            # print("y:",y)
+            # print("x:",x)
+            # breakpoint()
+            # print("Time taken until NMS stage:",time.time() - start_time)
             c = reliability[0,0,y,x]
             q = repeatability[0,0,y,x]
             d = descriptors[0,:,y,x].t()
@@ -173,13 +189,12 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
     scores = torch.cat(C) * torch.cat(Q) # scores = reliability * repeatability
     XYS = torch.stack([X,Y,S], dim=-1)
     D = torch.cat(D)
+    print("Time taken for pytorch inference",time.time()-start_time)
+
     return XYS, D, scores
 
 
-def extract_keypoints(img, args,trt=True):
-
-    if(trt == True):
-        net = None
+def extract_keypoints(net, img, args,trt=True):
     
     xys, desc, scores = extract_multiscale(net, img, detector,
         scale_f   = args['scale_f'], 
@@ -199,31 +214,38 @@ def extract_keypoints(img, args,trt=True):
 
 args = {'model' : 'r2d2/models/r2d2_WAF_N16.pt', 'scale_f' : 2**0.25, 'min_size' : 256, 'max_size' : 1380, 'min_scale' : 0, 'max_scale' : 1, 'reliability_thr' : 0.7, 'repeatability_thr' : 0.7 , 'gpu' : [0]}
 # net = load_network(args['model'])
-# iscuda = common.torch_set_gpu(args['gpu'])
+iscuda = common.torch_set_gpu(args['gpu'])
 # if iscuda: net = net.cuda()
 detector = NonMaxSuppression( rel_thr = args['reliability_thr'], rep_thr = args['repeatability_thr'])
-
+if iscuda: detector = detector.cuda()
+#Global variables
+init_net = False
+net = None
 
 def extract_features_and_desc(image,trt=True):
     '''
     image: np.uint8
     '''
-
-    if(trt == False):
+    global init_net, net
+    if(trt == False and not(init_net)):
         #Perform inference using pytorch
+        # print("Inside initialize network")
         net = load_network(args['model'])
-        iscuda = common.torch_set_gpu(args['gpu'])
         if iscuda: net = net.cuda()
+        init_net = True
 
     img_pil = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     img_pil = Image.fromarray(img_pil)
     img_cpu = img_pil
     # print("type(img_cpu):",type(img_cpu))
     img = norm_RGB(img_cpu)[None]
-    if(trt == False): #For Trt inference, the image is passed to the GPU in trt_inference.py
+    if(trt == False): #
         if iscuda: 
             img = img.cuda()
-    kps, desc = extract_keypoints(img, args,trt=trt)
+        kps, desc = extract_keypoints(net, img, args,trt=trt)
+    else:
+        kps, desc = extract_keypoints(None, img, args,trt=trt)
+        
     # alldesc = np.transpose(alldesc, (1, 2,0))
 
     return np.squeeze(kps), np.squeeze(desc)
