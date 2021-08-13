@@ -6,7 +6,7 @@ from tqdm import tqdm
 from PIL import Image
 from VisualOdometry_Stereo import VisualOdometry
 # from seg_utils import *
-from park_utils import *
+from Utils.park_utils import *
 import logging
 logger = logging.getLogger('module_stereo_runner')
 logger.setLevel(logging.INFO)

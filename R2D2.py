@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(1, 'r2d2')
+sys.path.insert(1, 'feature_extractors/r2d2')
 import os, pdb
 from PIL import Image
 import numpy as np
@@ -20,7 +20,7 @@ import glob
 import pickle
 import matplotlib.pyplot as plt
 import logging
-import trt_inference
+import TRT.trt_inference
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('module_R2D2')
 logger.setLevel(logging.INFO)
@@ -212,7 +212,7 @@ def extract_keypoints(net, img, args,trt=True):
     return (xys[idxs], desc[idxs])
     
 
-args = {'model' : 'r2d2/models/r2d2_WAF_N16.pt', 'scale_f' : 2**0.25, 'min_size' : 256, 'max_size' : 1380, 'min_scale' : 0, 'max_scale' : 1, 'reliability_thr' : 0.7, 'repeatability_thr' : 0.7 , 'gpu' : [0]}
+args = {'model' : 'feature_extractors/r2d2/models/r2d2_WAF_N16.pt', 'scale_f' : 2**0.25, 'min_size' : 256, 'max_size' : 1380, 'min_scale' : 0, 'max_scale' : 1, 'reliability_thr' : 0.7, 'repeatability_thr' : 0.7 , 'gpu' : [0]}
 # net = load_network(args['model'])
 iscuda = common.torch_set_gpu(args['gpu'])
 # if iscuda: net = net.cuda()

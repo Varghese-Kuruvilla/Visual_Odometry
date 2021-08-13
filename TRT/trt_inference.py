@@ -12,7 +12,7 @@ import cv2
 import torch
 from PIL import Image
 from tools.dataloader import norm_RGB
-import common 
+import TRT.common 
 
 #For debug
 def breakpoint():
@@ -38,7 +38,7 @@ class trt_infer:
 	        engine = runtime.deserialize_cuda_engine(f.read())
         context = engine.create_execution_context()
         #Prepare buffer
-        inputs, outputs, bindings, stream = common.allocate_buffers(engine)
+        inputs, outputs, bindings, stream = TRT.common.allocate_buffers(engine)
         #store
         self.inputs = inputs
         self.outputs = outputs
@@ -70,7 +70,7 @@ class trt_infer:
         # inputs[0].host = frame
         np.copyto(inputs[0].host, frame)
         # This particular ResNet50 model requires some preprocessing, specifically, mean normalization.
-        res = common.do_inference_v2(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+        res = TRT.common.do_inference_v2(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
         # res = {k:[r[k] for r in res if k in r] for k in {k for r in res for k in r}}
         
         if self.cfx:
@@ -168,17 +168,17 @@ def main():
 	#     engine = runtime.deserialize_cuda_engine(f.read())
     # context = engine.create_execution_context()
 
-    # inputs, outputs, bindings, stream = common.allocate_buffers(engine)
+    # inputs, outputs, bindings, stream = TRT.common.allocate_buffers(engine)
     # with engine.create_execution_context() as context:
             # For more information on performing inference, refer to the introductory samples.
-            # The common.do_inference function will return a list of outputs - we only have one in this case.
+            # The TRT.common.do_inference function will return a list of outputs - we only have one in this case.
     # for file_path in glob.glob("/home/volta-2/VO/data/mar8seq/00/*.png"):
     #     try:
     #         frame = cv2.imread(file_path)
     #         frame = prep_img(frame)
     #         inputs[0].host = frame
     #         start_time = time.time()
-    #         output = common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+    #         output = TRT.common.do_inference(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
     #         print(output)
     #     except KeyboardInterrupt:
     #         cfx.pop()

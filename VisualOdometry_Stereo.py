@@ -16,10 +16,10 @@ np.set_printoptions(suppress=True, precision = 2)
 # from SIFT import *
 from R2D2 import *
 
-from frame_utils import *
-from park_utils import *
-from geom_utils import *
-from SE3_utils import SE3
+from Utils.frame_utils import *
+from Utils.park_utils import *
+from Utils.geom_utils import *
+from Utils.SE3_utils import SE3
 
 listlength = 1
 

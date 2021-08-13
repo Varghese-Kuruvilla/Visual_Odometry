@@ -1,5 +1,5 @@
 import numpy as np
-from SE3_utils import SE3
+from Utils.SE3_utils import SE3
 class FramePair:
     def __init__(self, f1, f2, matches_no, left_kp, right_kp, frame1_idx = None,  cheirality_pts_ct=0, inlier_pts_ct=0, pose=SE3()):
         self.frame1 = f1
