@@ -153,7 +153,7 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             start_nms_time = time.time()
             # print("repeatability:",repeatability)
             y,x = detector(**res) # nms
-            print("Time taken for NMS stage:",time.time()-start_nms_time)
+            # print("Time taken for NMS stage:",time.time()-start_nms_time)
             # print("type(y):",type(y))
             # print("type(x):",type(x))
             # print("y:",y)
@@ -189,7 +189,7 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
     scores = torch.cat(C) * torch.cat(Q) # scores = reliability * repeatability
     XYS = torch.stack([X,Y,S], dim=-1)
     D = torch.cat(D)
-    print("Time taken for pytorch inference",time.time()-start_time)
+    # print("Time taken for pytorch inference",time.time()-start_time)
 
     return XYS, D, scores
 

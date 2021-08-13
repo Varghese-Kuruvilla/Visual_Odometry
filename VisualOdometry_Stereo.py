@@ -203,12 +203,12 @@ class VisualOdometry:
                 midpoint_3D = np.dot(H_inv,mid_pt_homo)
                 midpoint_3D_normalized = midpoint_3D / abs(midpoint_3D[-1])
                 # print("MIDPOINT 3D " , midpoint_3D, midpoint,    midpoint_3D_normalized, framepair.pose.t.T, np.linalg.norm(framepair.pose.t.T))
-                midpoint_3D_depth = abs(midpoint_3D_normalized[0] / 100)
+                midpoint_3D_depth = abs(midpoint_3D_normalized[0] / 100) #Midpoint of the potential parking spot in metres
             else:
                 midpoint_3D_depth = d_img[midpoint[1], midpoint[0]]
             
             midpoint_3D = unprojection_kp(np.asarray([midpoint]), midpoint_3D_depth, self.cam_intr)
-            self.midpoint_3D = midpoint_3D.reshape((1,3))
+            self.midpoint_3D = midpoint_3D.reshape((1,3)) #3D coordinates of the midpoint
 
 
         def save_poses(self, save_name = 'r2d2parking.pkl'):
@@ -229,7 +229,7 @@ class VisualOdometry:
                 if(frame_no == 0): #First frame
                         # print("ZERO INDEX")
                         if self.method != 'OF':
-                                kp, desc = extract_features_and_desc(img,trt=False)               
+                                kp, desc = extract_features_and_desc(img,trt=False)  #From R2D2.py             
                                 frame1 = Frame(id = 0, img = img, kps = kp, desc = desc, fil = '%06d'%frame_no, pose = SE3(), depth = depth_img)
 
                         self.ref_data = append_to_list(self.ref_data, frame1)
