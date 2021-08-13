@@ -34,7 +34,7 @@ class trt_infer:
         TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
         self.cfx = cuda.Device(0).make_context()
         #Read engine file
-        with open("/workspace/VO/engines/r2d2_fp32.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+        with open("/workspace/VO/engines/r2d2_fp16.engine", "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
 	        engine = runtime.deserialize_cuda_engine(f.read())
         context = engine.create_execution_context()
         #Prepare buffer

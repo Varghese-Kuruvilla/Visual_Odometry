@@ -14,5 +14,5 @@ camera_intrinsic_matrix:
   - 0.0
   - 1.0
 
-visualize_results: True #Visualize the extracted features and the matches between the images
+visualize_results: False #Visualize the extracted features and the matches between the images
   
