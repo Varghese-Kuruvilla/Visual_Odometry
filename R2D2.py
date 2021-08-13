@@ -136,7 +136,7 @@ def extract_multiscale( net, img, detector, scale_f=2**0.25,
             
             else:
                 # print("Inside trt_inference")
-                res = trt_inference.r2d2_trt_inference(img)
+                res = TRT.trt_inference.r2d2_trt_inference(img)
             # print("res:" + str(res)) 
             # get output and reliability map
             descriptors = res['descriptors'][0]

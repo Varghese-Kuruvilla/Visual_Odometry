@@ -10,18 +10,24 @@ import re
 import shutil
 from sklearn import linear_model
 import os
+import yaml
 np.set_printoptions(suppress=True, precision = 2)
 
 # from SURF import *
 # from SIFT import *
 from R2D2 import *
-
 from Utils.frame_utils import *
 from Utils.park_utils import *
 from Utils.geom_utils import *
 from Utils.SE3_utils import SE3
 
 listlength = 1
+
+#Display image
+def display_image(winname,frame):
+    cv2.namedWindow(winname,cv2.WINDOW_NORMAL)
+    cv2.imshow(winname,frame)
+    key = cv2.waitKey(0)
 
 def append_to_list(l, ele, listlen= listlength):
     l.append(ele)
@@ -32,7 +38,7 @@ def append_to_list(l, ele, listlen= listlength):
 class VisualOdometry:
         def __init__(self, camera_intrinsics, seq):
 
- 
+                
                 self.cam_intr = camera_intrinsics.copy()            
 
                 self.ref_data = []
@@ -107,7 +113,11 @@ class VisualOdometry:
                 framepair.left_kp_og = left_kp.copy()
                 framepair.right_kp_og = right_kp.copy()
 
-                # self.vizualize_custom_matches(framepair.frame1.image, framepair.frame2.image, left_kp, right_kp)
+                with open("config/vo_params.yaml") as f:
+                        vo_params = yaml.load(f, Loader=yaml.FullLoader)
+                
+                if(vo_params['visualize_results'] == True):
+                        self.vizualize_custom_matches(framepair.frame1.image, framepair.frame2.image, left_kp, right_kp)
 
                 # print(left_3D_points[::10], right_kp[::10])
                 # self.vizualize_kps(None, self.cur_data.image, right_kp[::10], '_%06d'%(self.img_id))
@@ -158,11 +168,14 @@ class VisualOdometry:
 
 
         def vizualize_custom_matches(self,img1, img2, kps1, kps2, name = 'match_inl'):
-                cv_kp1 = [cv2.KeyPoint(x=pt[0], y=pt[1], _size=1) for pt in kps1]
-                cv_kp2 = [cv2.KeyPoint(x=pt[0], y=pt[1], _size=1) for pt in kps2]
+                cv_kp1 = [cv2.KeyPoint(x=pt[0], y=pt[1], size=1) for pt in kps1]
+                cv_kp2 = [cv2.KeyPoint(x=pt[0], y=pt[1], size=1) for pt in kps2]
                 dmtches = [cv2.DMatch(_imgIdx=0,_queryIdx=i, _trainIdx=i, _distance = 0) for i in range(len(cv_kp1))]
                 out_img = cv2.drawMatches(img1, cv_kp1, img2, cv_kp2, dmtches[::10], None, (0,255,255), -1, None, 2)
-                cv2.imwrite('outfolder/%02d_%06d_match_inl.jpg'%(self.seq, self.img_id), out_img)
+                # display_image("Feature Matching",out_img)
+                # cv2.imwrite("test.jpg",out_img)
+                
+                cv2.imwrite('outfolder/TRT_matches/%02d_%06d_match_inl.jpg'%(self.seq, self.img_id), out_img)
 
 
         def vizualize_kps(self,img1, img2, kps, val, to_update = False):
@@ -229,7 +242,7 @@ class VisualOdometry:
                 if(frame_no == 0): #First frame
                         # print("ZERO INDEX")
                         if self.method != 'OF':
-                                kp, desc = extract_features_and_desc(img,trt=False)  #From R2D2.py             
+                                kp, desc = extract_features_and_desc(img,trt=True)  #From R2D2.py             
                                 frame1 = Frame(id = 0, img = img, kps = kp, desc = desc, fil = '%06d'%frame_no, pose = SE3(), depth = depth_img)
 
                         self.ref_data = append_to_list(self.ref_data, frame1)
@@ -244,7 +257,7 @@ class VisualOdometry:
                         self.img_id = imgidx
                         to_update = False
                         start_time = time.time()
-                        cur_kp, cur_desc = extract_features_and_desc(cur_img,trt=False)
+                        cur_kp, cur_desc = extract_features_and_desc(cur_img,trt=True)
                         print("Time taken to extract features:",time.time()-start_time)
                         frame1 = self.ref_data[-1]
                         ref_kp, ref_desc = self.ref_data[-1].get_kp_desc()
