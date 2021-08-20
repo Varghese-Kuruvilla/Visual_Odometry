@@ -1,0 +1,18 @@
+vo_method: "rgbd" #Choose from monocular or rgbd
+feature_extractor: "r2d2" #Choose from sift, surf, surf
+feature_matcher: "ratio_mutual_nn_matcher" #Choose from mnn_matcher, similarity_matcher, ratio_mutual_nn_matcher
+ #Camera intrinsic matrix of the form [fx,0,cx,0,fy,cy,0,0,1]
+ #NOTE: The camera instrinsics should be specified for image resolution 640 * 480
+camera_intrinsic_matrix:
+  - 332.9648157406122
+  - 0.0
+  - 310.8472797033171
+  - 0.0
+  - 444.0950902369522
+  - 252.76060777256825
+  - 0.0
+  - 0.0
+  - 1.0
+
+visualize_results: False #Visualize the extracted features and the matches between the images
+  
